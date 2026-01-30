@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-config-manager
+  labels:
+    app: telegraf-config-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf-config-manager
+  template:
+    metadata:
+      labels:
+        app: telegraf-config-manager
+    spec:
+      containers:
+      - name: telegraf-config-manager
+        image: telegraf-config-manager:toml
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      tolerations:
+      - key: "node.kubernetes.io/disk-pressure"
+        operator: "Exists"
+        effect: "NoSchedule"
+      restartPolicy: Always
