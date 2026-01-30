@@ -1,0 +1,4 @@
+Flask==2.3.3
+Werkzeug==2.3.7
+PyYAML==6.0.1
+toml==0.10.2
