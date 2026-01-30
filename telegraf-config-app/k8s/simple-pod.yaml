@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: telegraf-config-manager
+  labels:
+    app: telegraf-config-manager
+spec:
+  hostNetwork: true
+  containers:
+  - name: telegraf-config-manager
+    image: telegraf-config-manager:toml
+    imagePullPolicy: Never
+    ports:
+    - containerPort: 5000
+      hostPort: 5000
+    env:
+    - name: FLASK_ENV
+      value: "production"
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "100m"
+  restartPolicy: Always
