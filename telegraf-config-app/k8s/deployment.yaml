@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: telegraf-config-manager
+  namespace: telegraf-config-mgr
   labels:
     app: telegraf-config-manager
 spec:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
       - name: telegraf-config-manager
-        image: telegraf-config-manager:toml
+        image: telegraf-config-manager:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
