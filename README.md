@@ -8,6 +8,36 @@ Before starting, ensure you have the following installed:
 - kubectl configured to communicate with your cluster
 - Access to the project directory: `/project/telegraf-config-app`
 
+**Important Note:** The Telegraf Configuration Manager has been updated to use the dedicated `telegraf-config-mgr` namespace for better resource isolation and management. Ensure this namespace exists:
+
+```bash
+kubectl create namespace telegraf-config-mgr
+```
+
+All deployments and kubectl commands must include the `-n telegraf-config-mgr` flag to target the correct namespace.
+
+### Namespace Migration Notes
+
+**If you previously deployed this application in the `default` namespace:**
+
+1. **Clean up old resources:**
+   ```bash
+   kubectl delete deployment telegraf-config-manager -n default
+   kubectl delete service telegraf-config-manager-service -n default
+   kubectl delete service telegraf-config-manager-access -n default
+   ```
+
+2. **Why the namespace change?**
+   - Better resource isolation and organization
+   - Prevents NodePort conflicts when multiple services use the same ports
+   - Easier to manage application lifecycle and permissions
+   - Follows Kubernetes best practices for multi-tenant environments
+
+3. **Service Port Considerations:**
+   - NodePort 30080 is now allocated exclusively to this namespace
+   - No conflicts with other services in the cluster
+   - Consistent access regardless of cluster state changes
+
 ---
 
 ## Step-by-Step Deployment Instructions
@@ -49,38 +79,38 @@ You have three deployment options. Choose one:
 #### Option A: Simple Pod Deployment (Quick Start)
 
 ```bash
-kubectl apply -f k8s/pod.yaml
+kubectl apply -f k8s/pod.yaml -n telegraf-config-mgr
 ```
 
 **Access the pod:**
 ```bash
-kubectl port-forward pod/telegraf-config-manager-pod 5000:5000
+kubectl port-forward pod/telegraf-config-manager-pod -n telegraf-config-mgr 5000:5000
 ```
 Then access at: http://localhost:5000
 
 #### Option B: Deployment with Service (Recommended for Production)
 
 ```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/deployment.yaml -n telegraf-config-mgr
+kubectl apply -f k8s/service.yaml -n telegraf-config-mgr
 ```
 
 **Access via NodePort:**
 ```bash
-kubectl get service telegraf-config-manager-service
+kubectl get service telegraf-config-manager-service -n telegraf-config-mgr
 ```
 The service exposes port 30080 on the node. Access at: http://<NODE_IP>:30080
 
 #### Option C: Deployment with LoadBalancer
 
 ```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/loadbalancer-service.yaml
+kubectl apply -f k8s/deployment.yaml -n telegraf-config-mgr
+kubectl apply -f k8s/loadbalancer-service.yaml -n telegraf-config-mgr
 ```
 
 **Access via LoadBalancer:**
 ```bash
-kubectl get service telegraf-config-manager-service
+kubectl get service telegraf-config-manager-access -n telegraf-config-mgr
 ```
 Look for the EXTERNAL-IP and access at: http://<EXTERNAL-IP>:80
 
@@ -114,7 +144,7 @@ Once the pod is running, access the web interface:
 
 **If using port-forward:**
 ```bash
-kubectl port-forward deployment/telegraf-config-manager 5000:5000
+kubectl port-forward deployment/telegraf-config-manager -n telegraf-config-mgr 5000:5000
 ```
 Open: http://localhost:5000
 
@@ -154,12 +184,12 @@ To remove the deployment:
 
 ```bash
 # Remove pod and service
-kubectl delete -f k8s/pod.yaml
-kubectl delete -f k8s/service.yaml
-kubectl delete -f k8s/deployment.yaml
+kubectl delete -f k8s/pod.yaml -n telegraf-config-mgr
+kubectl delete -f k8s/service.yaml -n telegraf-config-mgr
+kubectl delete -f k8s/deployment.yaml -n telegraf-config-mgr
 
 # Or remove everything at once
-kubectl delete all -l app=telegraf-config-manager
+kubectl delete all -l app=telegraf-config-manager -n telegraf-config-mgr
 ```
 
 ---
@@ -170,7 +200,7 @@ kubectl delete all -l app=telegraf-config-manager
 
 Check pod status and events:
 ```bash
-kubectl describe pod -l app=telegraf-config-manager
+kubectl describe pod -l app=telegraf-config-manager -n telegraf-config-mgr
 ```
 
 Common fixes:
@@ -182,22 +212,22 @@ Common fixes:
 
 1. Check pod is running:
    ```bash
-   kubectl get pods -l app=telegraf-config-manager
+   kubectl get pods -l app=telegraf-config-manager -n telegraf-config-mgr
    ```
 
 2. Check service endpoints:
    ```bash
-   kubectl get endpoints telegraf-config-manager-service
+   kubectl get endpoints telegraf-config-manager-service -n telegraf-config-mgr
    ```
 
 3. Test connectivity from inside cluster:
    ```bash
-   kubectl run curl-test --image=curlimages/curl -i --rm --restart=Never -- curl http://telegraf-config-manager-service:80
+   kubectl run curl-test --image=curlimages/curl -i --rm --restart=Never -n telegraf-config-mgr -- curl http://telegraf-config-manager-service:80
    ```
 
 4. Check port-forward if using local access:
    ```bash
-   kubectl port-forward deployment/telegraf-config-manager 5000:5000
+   kubectl port-forward deployment/telegraf-config-manager -n telegraf-config-mgr 5000:5000
    ```
 
 ### Issue: Image pull errors
